@@ -18,7 +18,13 @@ export const getRecipesByIngredientsQuery = groq`
     mainImage,
     prepTime,
     cookTime,
-    servings
+    servings,
+    "ingredients": ingredients[]->{
+      _id,
+      name,
+      category,
+      unit
+    }
   }
 `
 

@@ -5,25 +5,7 @@ import { client } from '@/sanity/client'
 import { getIngredientsQuery, getRecipesByIngredientsQuery } from '@/lib/queries'
 import IngredientSelector from '@/components/IngredientSelector'
 import RecipeCard from '@/components/RecipeCard'
-import { SanityImageSource } from '@sanity/image-url/lib/types/types'
-
-type Ingredient = {
-  _id: string
-  name: string
-  category: string
-  unit: string
-}
-
-type Recipe = {
-  _id: string
-  title: string
-  description: string
-  slug: string
-  mainImage: SanityImageSource
-  prepTime: number
-  cookTime: number
-  servings: number
-}
+import { Recipe, Ingredient } from '@/types/recipe'
 
 export default function Home() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
