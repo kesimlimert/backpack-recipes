@@ -1,101 +1,107 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react'
+import { client } from '@/sanity/client'
+import { getIngredientsQuery, getRecipesByIngredientsQuery } from '@/lib/queries'
+import IngredientSelector from '@/components/IngredientSelector'
+import RecipeCard from '@/components/RecipeCard'
+import { SanityImageSource } from '@sanity/image-url/lib/types/types'
+
+type Ingredient = {
+  _id: string
+  name: string
+  category: string
+  unit: string
+}
+
+type Recipe = {
+  _id: string
+  title: string
+  description: string
+  slug: string
+  mainImage: SanityImageSource
+  prepTime: number
+  cookTime: number
+  servings: number
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedCount, setSelectedCount] = useState(0)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const loadIngredients = async () => {
+      const data = await client.fetch(getIngredientsQuery)
+      setIngredients(data)
+      setLoading(false)
+    }
+    loadIngredients()
+  }, [])
+
+  const handleIngredientSelection = async (selectedIds: string[]) => {
+    setSelectedCount(selectedIds.length)
+    if (selectedIds.length === 0) {
+      setRecipes([])
+      return
+    }
+
+    const recipes = await client.fetch(getRecipesByIngredientsQuery, {
+      ingredientIds: selectedIds
+    })
+    setRecipes(recipes)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <main className="container mx-auto px-4 py-12 max-w-7xl">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Find Recipes by Ingredients
+          </h1>
+          <p className="text-lg text-gray-700">
+            Select ingredients you have to find matching recipes
+          </p>
+          {selectedCount > 0 && (
+            <p className="text-lg font-medium text-indigo-600 mt-4">
+              {selectedCount} ingredient{selectedCount !== 1 ? 's' : ''} selected
+            </p>
+          )}
         </div>
+        
+        <div className="mb-12 bg-gray-100 rounded-xl p-8">
+          <IngredientSelector 
+            ingredients={ingredients}
+            onSelectionChange={handleIngredientSelection}
+          />
+        </div>
+
+        {recipes.length > 0 ? (
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              Found {recipes.length} Recipe{recipes.length !== 1 ? 's' : ''}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {recipes.map((recipe) => (
+                <RecipeCard key={recipe._id} recipe={recipe} />
+              ))}
+            </div>
+          </div>
+        ) : selectedCount > 0 ? (
+          <div className="text-center text-lg text-gray-700 font-medium">
+            No recipes found with selected ingredients
+          </div>
+        ) : null}
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }
