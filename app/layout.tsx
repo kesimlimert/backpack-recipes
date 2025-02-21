@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Backpack Recipes",
-  description: "Search for recipes based on the ingredients you have",
+  description: "Find recipes based on the ingredients you have",
 };
 
 export default function RootLayout({
