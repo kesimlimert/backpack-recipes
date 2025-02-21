@@ -10,7 +10,7 @@ export const getIngredientsQuery = groq`
 `
 
 export const getRecipesByIngredientsQuery = groq`
-  *[_type == "recipe" && references($ingredientIds[])] {
+  *[_type == "recipe" && count(ingredients[references($ingredientIds[])]) == count($ingredientIds)] {
     _id,
     title,
     description,
